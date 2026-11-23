@@ -1,7 +1,8 @@
 // Shared frame for "duel" games: one partner plays (runner), the other sabotages.
 // The runner's phone owns the simulation and streams snapshots; the saboteur's
 // phone redraws them and sends sabotage orders paid for with energy.
-import { h } from '../ui.js';
+import { h, wait } from '../ui.js';
+import { sfx, shake } from '../fx.js';
 
 const MAX_ENERGY = 10;
 const REGEN = 1 / 1.6; // energy per second
@@ -29,11 +30,25 @@ export function mountDuel(game, ctx) {
       const s = game.sabotages.find((x) => x.id === id);
       if (!sim || ended || !s) return;
       sim.sab(id);
-      ctx.toast(`😈 ${s.label} !`);
+      ctx.toast(`${s.emoji} ${s.label} !`);
+      sfx('sab'); shake(stage, 'hit');
     };
-    const begin = () => {
-      if (sim) return;
+    let starting = false;
+    const begin = async () => {
+      if (sim || starting) return;
+      starting = true;
       overlay.remove();
+      const count = h('div', { class: 'count' });
+      stage.append(count);
+      for (const n of ['3', '2', '1', 'GO']) {
+        if (ended) return;
+        count.textContent = n; count.classList.remove('pop'); void count.offsetWidth; count.classList.add('pop');
+        sfx(n === 'GO' ? 'go' : 'tick');
+        if (!ctx.solo) ctx.send('count', n);
+        await wait(n === 'GO' ? 450 : 700);
+      }
+      count.remove();
+      if (ended) return;
       sim = game.run(view, panel, { end });
       stops.push(() => sim.stop());
       if (ctx.solo) {
@@ -61,6 +76,7 @@ export function mountDuel(game, ctx) {
           energy -= s.cost;
           uses[s.id] = (uses[s.id] || 0) + 1;
           ctx.send('sab', s.id);
+          sfx('sab'); shake(stage, 'hit');
           b.classList.remove('fired'); void b.offsetWidth; b.classList.add('fired');
           tick();
         },
@@ -86,8 +102,17 @@ export function mountDuel(game, ctx) {
       if (last) energy = Math.min(MAX_ENERGY, energy + REGEN * 0.2);
       tick();
     }, 200);
-    const ready = setInterval(() => { if (!last) ctx.send('ready', 1); }, 1000);
+    let counting = false;
+    const ready = setInterval(() => { if (!last && !counting) ctx.send('ready', 1); }, 1000);
     ctx.send('ready', 1);
+    const count = h('div', { class: 'count' });
+    ctx.on('count', (n) => {
+      counting = true;
+      if (!count.isConnected) stage.append(count);
+      count.textContent = n; count.classList.remove('pop'); void count.offsetWidth; count.classList.add('pop');
+      sfx(n === 'GO' ? 'go' : 'tick');
+      if (n === 'GO') setTimeout(() => count.remove(), 450);
+    });
     ctx.on('snap', (s) => { last = s; lastT = performance.now(); });
     let raf = requestAnimationFrame(function loop(now) {
       if (last) view.draw(game.extrapolate ? game.extrapolate(last, (now - lastT) / 1000) : last);

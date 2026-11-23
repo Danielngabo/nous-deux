@@ -1,39 +1,55 @@
 // Casse-briques saboteur — the runner clears the wall, the saboteur rebuilds it.
 import { h, fitCanvas, roundRect, clamp, rnd } from '../ui.js';
+import { sfx, shake } from '../fx.js';
 
 const W = 320, H = 440, COLS = 8, BW = 36, BH = 14, GAP = 4, OX = 2, OY = 44, PITCH = 18;
 const PY = H - 28, R = 5, MAXROW = 17, PW = 70, PW_MINI = 42;
-const COLORS = ['#ff6b5e', '#ffc857', '#5ee0b5', '#6fb1ff', '#c58bff'];
+const COLORS = ['#ff5d73', '#ffb627', '#4be3b0', '#7fd0ff', '#b99cff'];
 const newRow = () => Array.from({ length: COLS }, () => 1 + rnd(COLORS.length));
 const r1 = (v) => Math.round(v * 10) / 10;
 
-function draw(g, s) {
+function draw(g, s, fxs) {
   g.clearRect(0, 0, W, H);
-  g.fillStyle = '#221933';
-  roundRect(g, 0, 0, W, H, 14); g.fill();
+  const bg = g.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#24163a'); bg.addColorStop(1, '#170f26');
+  g.fillStyle = bg; roundRect(g, 0, 0, W, H, 14); g.fill();
   // danger line: bricks reaching it lose the game
-  g.strokeStyle = 'rgba(255,107,94,.35)'; g.setLineDash([4, 6]);
+  g.strokeStyle = 'rgba(255,93,115,.4)'; g.setLineDash([4, 6]);
   g.beginPath(); g.moveTo(8, OY + MAXROW * PITCH); g.lineTo(W - 8, OY + MAXROW * PITCH); g.stroke();
   g.setLineDash([]);
   for (let r = 0; r < s.g.length; r++) {
     for (let c = 0; c < COLS; c++) {
       const v = s.g[r][c];
       if (!v) continue;
-      g.fillStyle = COLORS[v - 1];
-      roundRect(g, OX + c * (BW + GAP), OY + r * PITCH, BW, BH, 4); g.fill();
+      const x = OX + c * (BW + GAP), y = OY + r * PITCH;
+      g.fillStyle = COLORS[v - 1]; roundRect(g, x, y, BW, BH, 4); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.28)'; roundRect(g, x + 2, y + 2, BW - 4, 3, 1.5); g.fill();
     }
   }
-  g.fillStyle = s.fx[2] > 0 ? '#c58bff' : s.fx[1] > 0 ? '#ff6b5e' : '#f6efe9';
+  for (const p of fxs.parts) {
+    g.globalAlpha = Math.max(0, p.life); g.fillStyle = p.c;
+    g.fillRect(p.x - 2, p.y - 2, 4, 4);
+  }
+  g.globalAlpha = 1;
+  const ballColor = s.fx[0] > 0 ? '#ffb627' : '#ffffff';
+  fxs.trail.forEach((t, i) => {
+    g.globalAlpha = ((i + 1) / fxs.trail.length) * 0.3; g.fillStyle = ballColor;
+    g.beginPath(); g.arc(t[0], t[1], R * ((i + 1) / fxs.trail.length), 0, Math.PI * 2); g.fill();
+  });
+  g.globalAlpha = 1;
+  g.shadowBlur = 12;
+  g.shadowColor = g.fillStyle = s.fx[2] > 0 ? '#b99cff' : s.fx[1] > 0 ? '#ff5d73' : '#f6efe9';
   roundRect(g, s.px - s.pw / 2, PY, s.pw, 9, 4.5); g.fill();
-  g.fillStyle = s.fx[0] > 0 ? '#ffc857' : '#fff';
+  g.shadowColor = g.fillStyle = ballColor;
   g.beginPath(); g.arc(s.b[0], s.b[1], R, 0, Math.PI * 2); g.fill();
+  g.shadowBlur = 0;
   g.font = '15px system-ui'; g.textBaseline = 'top'; g.textAlign = 'left';
   g.fillText('❤️'.repeat(Math.max(0, s.l)), 10, 12);
   const tags = [];
   if (s.fx[0] > 0) tags.push('⚡ rapide');
   if (s.fx[1] > 0) tags.push('🤏 mini');
   if (s.fx[2] > 0) tags.push('🙃 inversé');
-  g.textAlign = 'right'; g.fillStyle = '#ffc857'; g.font = '600 12px system-ui';
+  g.textAlign = 'right'; g.fillStyle = '#ffb627'; g.font = '600 12px system-ui';
   g.fillText(tags.join('  '), W - 10, 15);
 }
 
@@ -52,7 +68,31 @@ export default {
 
   mount(stage) {
     const cv = fitCanvas(stage, W, H);
-    return { cv, draw: (s) => draw(cv.g, s), destroy: () => cv.off() };
+    // view-local effects (sparks, ball trail) are derived from successive states,
+    // so they also play on the saboteur's phone
+    const fxs = { parts: [], trail: [] };
+    let prev = null, lives = 3, t0 = performance.now();
+    return {
+      cv,
+      draw(s) {
+        const now = performance.now(), dt = Math.min(0.05, (now - t0) / 1000); t0 = now;
+        if (prev && s.g.length <= prev.length) {
+          for (let r = 0; r < prev.length; r++) for (let c = 0; c < COLS; c++) {
+            if (!prev[r][c] || (s.g[r] && s.g[r][c])) continue;
+            sfx('hit');
+            for (let k = 0; k < 7; k++) fxs.parts.push({ x: OX + c * (BW + GAP) + BW / 2, y: OY + r * PITCH + BH / 2, vx: (Math.random() - 0.5) * 170, vy: (Math.random() - 0.6) * 170, life: 1, c: COLORS[prev[r][c] - 1] });
+          }
+        }
+        prev = s.g.map((row) => row.slice());
+        if (s.l < lives) { sfx('life'); shake(cv.c); }
+        lives = s.l;
+        for (const p of fxs.parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 420 * dt; p.life -= dt * 2.2; }
+        fxs.parts = fxs.parts.filter((p) => p.life > 0);
+        if (s.stuck > 0) fxs.trail.length = 0; else { fxs.trail.push([s.b[0], s.b[1]]); if (fxs.trail.length > 9) fxs.trail.shift(); }
+        draw(cv.g, s, fxs);
+      },
+      destroy: () => cv.off(),
+    };
   },
 
   extrapolate(s, dt) {

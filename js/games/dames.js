@@ -1,6 +1,7 @@
 // Dames (10×10, règles internationales simplifiées) — tour par tour.
 // Pièces : 1 pion blanc, 2 pion noir, 3 dame blanche, 4 dame noire. Les blancs (siège 0) montent.
 import { h } from '../ui.js';
+import { sfx } from '../fx.js';
 
 const N = 10;
 const DIRS = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
@@ -58,7 +59,7 @@ export function legal(st) {
 
 export function play(st, mv) {
   const b = st.b.slice();
-  const s = { b, turn: st.turn, chain: null, winner: null, n: st.n + 1 };
+  const s = { b, turn: st.turn, chain: null, winner: null, n: st.n + 1, lm: [mv.from, mv.to] };
   b[mv.to] = b[mv.from]; b[mv.from] = 0;
   if (mv.over != null) {
     b[mv.over] = 0;
@@ -104,7 +105,7 @@ export default {
         const i = seat === 1 ? N * N - 1 - k : k;
         const r = Math.floor(i / N), c = i % N, p = st.b[i];
         const sq = h('button', {
-          class: `dm-sq ${(r + c) % 2 ? 'dark' : 'light'}${targets.has(i) ? ' target' : ''}${sel === i ? ' sel' : ''}`,
+          class: `dm-sq ${(r + c) % 2 ? 'dark' : 'light'}${targets.has(i) ? ' target' : ''}${sel === i ? ' sel' : ''}${st.lm && st.lm.includes(i) ? ' last' : ''}`,
           'data-i': i,
         }, p ? h('span', { class: `dm-pc ${owner(p) === 0 ? 'w' : 'b'}${king(p) ? ' king' : ''}${movable.has(i) ? ' can' : ''}` }) : null);
         kids.push(sq);
@@ -118,14 +119,14 @@ export default {
       const i = +sq.dataset.i, moves = legal(st);
       const mv = moves.find((m) => m.from === sel && m.to === i);
       if (mv) {
-        st = play(st, mv); sel = st.chain; render();
+        st = play(st, mv); sel = st.chain; sfx('move'); render();
         ctx.save(st, st.winner);
       } else {
         sel = moves.some((m) => m.from === i) ? i : st.chain;
         render();
       }
     });
-    ctx.onState((s) => { if (s && s.n >= st.n) { st = s; sel = st.chain; render(); } });
+    ctx.onState((s) => { if (s && s.n >= st.n) { if (s.n > st.n) sfx('move'); st = s; sel = st.chain; render(); } });
     render();
     return { destroy: () => el.remove() };
   },

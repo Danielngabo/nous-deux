@@ -1,5 +1,6 @@
 // Blocs — the runner stacks falling blocks to clear lines, the saboteur makes it harder.
 import { h, fitCanvas, roundRect, rnd } from '../ui.js';
+import { sfx } from '../fx.js';
 
 const COLS = 10, ROWS = 18, CS = 20, SIDE = 84, W = COLS * CS + SIDE, H = ROWS * CS, GOAL = 12;
 const TYPES = 'IOTSZJL';
@@ -24,13 +25,15 @@ const collide = (g, p) => cells(p).some(([x, y]) => x < 0 || x >= COLS || y >= R
 
 function block(g, x, y, color, alpha = 1) {
   g.globalAlpha = alpha; g.fillStyle = color;
-  roundRect(g, x + 1, y + 1, CS - 2, CS - 2, 4); g.fill();
+  roundRect(g, x + 1, y + 1, CS - 2, CS - 2, 5); g.fill();
+  g.globalAlpha = alpha * 0.28; g.fillStyle = '#fff';
+  roundRect(g, x + 3, y + 3, CS - 6, 4, 2); g.fill();
   g.globalAlpha = 1;
 }
 
-function draw(g, s) {
+function draw(g, s, flash = 0) {
   g.clearRect(0, 0, W, H);
-  g.fillStyle = '#221933'; roundRect(g, 0, 0, COLS * CS, H, 10); g.fill();
+  g.fillStyle = '#1d1230'; roundRect(g, 0, 0, COLS * CS, H, 10); g.fill();
   g.strokeStyle = 'rgba(255,255,255,.04)';
   for (let x = 1; x < COLS; x++) { g.beginPath(); g.moveTo(x * CS, 0); g.lineTo(x * CS, H); g.stroke(); }
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (s.g[y][x]) block(g, x * CS, y * CS, COLORS[s.g[y][x]]);
@@ -46,6 +49,7 @@ function draw(g, s) {
     g.font = '28px system-ui'; g.textAlign = 'center'; g.textBaseline = 'middle';
     g.fillText('🌫️', (COLS * CS) / 2, (ROWS - 4) * CS);
   }
+  if (flash > 0) { g.fillStyle = `rgba(255,255,255,${flash * 0.5})`; roundRect(g, 0, 0, COLS * CS, H, 10); g.fill(); }
   const sx = COLS * CS + 10;
   g.textAlign = 'left'; g.textBaseline = 'top';
   g.fillStyle = '#a99bb8'; g.font = '600 11px system-ui'; g.fillText('SUIVANTE', sx, 6);
@@ -79,7 +83,16 @@ export default {
 
   mount(stage) {
     const cv = fitCanvas(stage, W, H);
-    return { cv, draw: (s) => draw(cv.g, s), destroy: () => cv.off() };
+    let lines = 0, flashAt = 0;
+    return {
+      cv,
+      draw(s) {
+        if (s.lines > lines) { flashAt = performance.now(); sfx('line'); }
+        lines = s.lines;
+        draw(cv.g, s, Math.max(0, 1 - (performance.now() - flashAt) / 260));
+      },
+      destroy: () => cv.off(),
+    };
   },
 
   run(view, panel, io) {
@@ -115,7 +128,7 @@ export default {
       return false;
     };
     const down = () => { if (!tryMove(0, 1)) lock(); acc = 0; };
-    const drop = () => { if (over || !s.cur) return; while (tryMove(0, 1)); lock(); acc = 0; };
+    const drop = () => { if (over || !s.cur) return; while (tryMove(0, 1)); sfx('move'); lock(); acc = 0; };
     const acts = { left: () => tryMove(-1, 0), right: () => tryMove(1, 0), rot: () => tryMove(0, 0, 1), down, drop };
 
     // touch controls (hold to repeat for moves)

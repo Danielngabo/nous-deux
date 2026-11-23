@@ -1,5 +1,6 @@
 // Bonbons — the runner lines up sweets to reach a score, the saboteur freezes and scrambles.
 import { h, wait, rnd } from '../ui.js';
+import { sfx } from '../fx.js';
 
 export const C = 7, R = 8, T = 6, STONE = 6, TARGET = 1400, MOVES = 20;
 const EMOJI = ['🍓', '🍋', '🍇', '🍏', '🫐', '🍊', '🪨'];
@@ -94,18 +95,26 @@ export default {
     const moves = h('b', {}, String(MOVES));
     const cellsEl = Array.from({ length: R * C }, (_, i) => h('button', { class: 'bb', 'data-i': i }));
     const grid = h('div', { class: 'bb-grid' }, cellsEl);
+    const combo = h('div', { class: 'bb-combo' });
+    let lastPop = '';
     const el = h('div', { class: 'bb-wrap' },
       h('div', { class: 'bb-hud' },
         h('div', { class: 'bb-score' }, '⭐ ', score, h('span', {}, ` / ${TARGET}`)),
         h('div', { class: 'bb-moves' }, moves, h('span', {}, ' coups'))),
       h('div', { class: 'bar' }, fill),
-      grid);
+      h('div', { class: 'bb-board' }, grid, combo));
     stage.append(el);
     const view = {
       onTap: null,
       draw(s) {
         score.textContent = s.sc; moves.textContent = s.m;
         fill.style.width = `${Math.min(100, (s.sc / TARGET) * 100)}%`;
+        const key = s.pop && s.pop.length ? s.pop.join() : '';
+        if (key && key !== lastPop) {
+          sfx(s.combo > 1 ? 'line' : 'hit');
+          if (s.combo > 1) { combo.textContent = `Combo ×${s.combo}`; combo.classList.remove('show'); void combo.offsetWidth; combo.classList.add('show'); }
+        }
+        lastPop = key;
         for (let i = 0; i < R * C; i++) {
           const v = s.g[i], b = cellsEl[i];
           const txt = v == null ? '' : EMOJI[ty(v)];
@@ -123,7 +132,7 @@ export default {
   },
 
   run(view, panel, io) {
-    const s = { g: newBoard(), sc: 0, m: MOVES, sel: -1, pop: [] };
+    const s = { g: newBoard(), sc: 0, m: MOVES, sel: -1, pop: [], combo: 0 };
     let busy = false, over = false;
     const queue = [];
     const hint = h('div', { class: 'hint' }, 'Touche un fruit puis son voisin pour les échanger');
@@ -136,7 +145,7 @@ export default {
       for (;;) {
         const m = findMatches(s.g);
         if (!m.size) break;
-        s.pop = [...m]; s.sc += m.size * 10 * combo; paint();
+        s.pop = [...m]; s.combo = combo; s.sc += m.size * 10 * combo; paint();
         await wait(190);
         clearMatches(s.g, m); s.pop = []; collapse(s.g); paint();
         await wait(170);
@@ -192,7 +201,7 @@ export default {
 
     return {
       stop() { over = true; view.onTap = null; hint.remove(); },
-      snap: () => ({ g: s.g, sc: s.sc, m: s.m, sel: s.sel, pop: s.pop }),
+      snap: () => ({ g: s.g, sc: s.sc, m: s.m, sel: s.sel, pop: s.pop, combo: s.combo }),
       sab(id) {
         if (over) return;
         if (busy) queue.push(id); else { apply(id); paint(); }

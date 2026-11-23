@@ -2,6 +2,7 @@
 // On pose une carte de la même couleur (♠♥♦♣) ou de la même valeur. 8 = joker (on choisit la couleur),
 // 2 = l'autre pioche 2 (cumulable), As = l'autre passe son tour. Le premier sans carte gagne.
 import { h, rnd } from '../ui.js';
+import { sfx } from '../fx.js';
 
 const SUITS = ['S', 'H', 'D', 'C'];
 const SYM = { S: '♠', H: '♥', D: '♦', C: '♣' };
@@ -86,7 +87,7 @@ export default {
     let st = ctx.state, shownFor = -1, picking = null;
     const el = h('div', { class: 'turn-game cards' });
     ctx.root.append(el);
-    const commit = (s) => { st = s; picking = null; render(); ctx.save(st, st.winner); };
+    const commit = (s) => { st = s; picking = null; sfx('move'); render(); ctx.save(st, st.winner); };
 
     function render() {
       const seat = ctx.seat(), other = 1 - seat;
@@ -133,7 +134,7 @@ export default {
       if (rank(c) === '8' && st.hands[st.turn].length > 1) { picking = c; return render(); }
       commit(playCard(st, c, suit(c)));
     });
-    ctx.onState((s) => { if (s && s.n >= st.n) { st = s; picking = null; render(); } });
+    ctx.onState((s) => { if (s && s.n >= st.n) { if (s.n > st.n) sfx('move'); st = s; picking = null; render(); } });
     render();
     return { destroy: () => el.remove() };
   },

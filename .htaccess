@@ -1,0 +1,10 @@
+# Nous Deux : l'app doit toujours charger sa dernière version (CDN et navigateur).
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|css|js|webmanifest)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  <Files "sw.js">
+    Header set Cache-Control "no-store"
+  </Files>
+</IfModule>
+AddType application/manifest+json .webmanifest

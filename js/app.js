@@ -7,6 +7,7 @@ import { GAMES, GAME_LIST } from './games/index.js';
 import { mountDuel } from './games/duel.js';
 import { pct as quizPct } from './games/quiz.js';
 
+const APP_VERSION = '3';
 const app = $('#app');
 const S = {
   sb: null, user: null, profile: null, couple: null, partner: null,
@@ -49,7 +50,17 @@ const duo = (cls = '') => h('div', { class: `duo ${cls}` }, h('i', {}, S.profile
 /* ---------- boot ---------- */
 boot();
 async function boot() {
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((r) => r.update()).catch(() => {});
+    // a new version took over: reload once so the screen shows it
+    let reloaded = false;
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloaded || !hadController) return;
+      reloaded = true;
+      if (!S.cur) location.reload();
+    });
+  }
   const solo = new URLSearchParams(location.search).get('solo');
   if (solo && GAMES[solo]) return openSolo(solo, () => { location.href = location.pathname; });
   if (!window.supabase) {
@@ -670,7 +681,8 @@ function openSettings() {
     toggleRow('Sons', 'Petits sons du chat et des jeux', soundOn(), (v) => { setSound(v); if (v) sfx('recv'); }),
     standalone() ? null : h('div', { class: 'set tip' }, h('b', {}, 'Installer l’app sur iPhone'),
       h('small', {}, 'Dans Safari : bouton Partager, puis « Sur l’écran d’accueil ». Ouvre ensuite l’app depuis son icône.')),
-    h('div', { class: 'set' }, h('button', { class: 'btn ghost', onclick: logout }, 'Se déconnecter')));
+    h('div', { class: 'set' }, h('button', { class: 'btn ghost', onclick: logout }, 'Se déconnecter')),
+    h('p', { class: 'muted version' }, `Version ${APP_VERSION}`));
 }
 
 async function enablePush() {

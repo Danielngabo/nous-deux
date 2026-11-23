@@ -1,5 +1,5 @@
 // Nous Deux — service worker: offline shell + push notifications
-const VERSION = 'nd-v2';
+const VERSION = 'nd-v3';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.webmanifest',
   'js/app.js', 'js/ui.js', 'js/config.js', 'js/fx.js', 'js/lock.js',
@@ -9,7 +9,9 @@ const SHELL = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION)
+    .then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
@@ -28,7 +30,7 @@ self.addEventListener('fetch', (e) => {
   const cdn = url.hostname === 'cdn.jsdelivr.net';
   if (url.origin !== self.location.origin && !cdn) return;
   e.respondWith(
-    fetch(req)
+    fetch(cdn ? req : new Request(req, { cache: 'no-cache' }))
       .then((res) => {
         if (res.ok || res.type === 'opaque') {
           const copy = res.clone();

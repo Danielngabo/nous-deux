@@ -332,3 +332,4 @@ small { display: block; }
 .toast { background: var(--gold); color: #33240a; font-family: var(--round); font-weight: 700; padding: 8px 16px; border-radius: 20px; animation: pop .3s var(--spring); transition: opacity .3s, transform .3s; box-shadow: 0 6px 20px rgba(0, 0, 0, .35); }
 .toast.out { opacity: 0; transform: translateY(-8px); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+.version { text-align: center; padding: 6px 0 2px; }

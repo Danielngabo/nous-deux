@@ -1,8 +1,8 @@
 // Shared frame for "duel" games: one partner plays (runner), the other sabotages.
 // The runner's phone owns the simulation and streams snapshots; the saboteur's
 // phone redraws them and sends sabotage orders paid for with energy.
-import { h, wait } from '../ui.js';
-import { sfx, shake } from '../fx.js';
+import { h, wait } from '../ui.js?v=4';
+import { sfx, shake } from '../fx.js?v=4';
 
 const MAX_ENERGY = 10;
 const REGEN = 1 / 1.6; // energy per second

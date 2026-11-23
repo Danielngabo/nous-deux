@@ -1,7 +1,7 @@
 // Tu me connais ? — chacun répond pour soi, puis devine la réponse de l'autre.
 // Tour par tour : le siège 0 répond aux 7 questions, puis le siège 1, puis on compare.
-import { h, rnd } from '../ui.js';
-import { sfx, confetti } from '../fx.js';
+import { h, rnd } from '../ui.js?v=4';
+import { sfx, confetti } from '../fx.js?v=4';
 
 const N = 7;
 const Q = [

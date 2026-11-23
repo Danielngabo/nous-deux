@@ -1,6 +1,6 @@
 // Casse-briques saboteur — the runner clears the wall, the saboteur rebuilds it.
-import { h, fitCanvas, roundRect, clamp, rnd } from '../ui.js';
-import { sfx, shake } from '../fx.js';
+import { h, fitCanvas, roundRect, clamp, rnd } from '../ui.js?v=4';
+import { sfx, shake } from '../fx.js?v=4';
 
 const W = 320, H = 440, COLS = 8, BW = 36, BH = 14, GAP = 4, OX = 2, OY = 44, PITCH = 18;
 const PY = H - 28, R = 5, MAXROW = 17, PW = 70, PW_MINI = 42;

@@ -1,8 +1,8 @@
 // Huit américain — jeu de cartes au tour par tour.
 // On pose une carte de la même couleur (♠♥♦♣) ou de la même valeur. 8 = joker (on choisit la couleur),
 // 2 = l'autre pioche 2 (cumulable), As = l'autre passe son tour. Le premier sans carte gagne.
-import { h, rnd } from '../ui.js';
-import { sfx } from '../fx.js';
+import { h, rnd } from '../ui.js?v=4';
+import { sfx } from '../fx.js?v=4';
 
 const SUITS = ['S', 'H', 'D', 'C'];
 const SYM = { S: '♠', H: '♥', D: '♦', C: '♣' };

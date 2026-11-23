@@ -1,6 +1,6 @@
 // Blocs — the runner stacks falling blocks to clear lines, the saboteur makes it harder.
-import { h, fitCanvas, roundRect, rnd } from '../ui.js';
-import { sfx } from '../fx.js';
+import { h, fitCanvas, roundRect, rnd } from '../ui.js?v=4';
+import { sfx } from '../fx.js?v=4';
 
 const COLS = 10, ROWS = 18, CS = 20, SIDE = 84, W = COLS * CS + SIDE, H = ROWS * CS, GOAL = 12;
 const TYPES = 'IOTSZJL';

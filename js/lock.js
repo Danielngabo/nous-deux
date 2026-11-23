@@ -1,6 +1,6 @@
 // Optional 4-digit code that hides the app on this phone. Stored hashed, on this device only.
-import { h } from './ui.js';
-import { sfx, shake } from './fx.js';
+import { h } from './ui.js?v=4';
+import { sfx, shake } from './fx.js?v=4';
 
 const KEY = 'nd_pin';
 export const hasPin = () => !!localStorage.getItem(KEY);

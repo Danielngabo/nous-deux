@@ -1,6 +1,6 @@
 // Bonbons — the runner lines up sweets to reach a score, the saboteur freezes and scrambles.
-import { h, wait, rnd } from '../ui.js';
-import { sfx } from '../fx.js';
+import { h, wait, rnd } from '../ui.js?v=4';
+import { sfx } from '../fx.js?v=4';
 
 export const C = 7, R = 8, T = 6, STONE = 6, TARGET = 1400, MOVES = 20;
 const EMOJI = ['🍓', '🍋', '🍇', '🍏', '🫐', '🍊', '🪨'];

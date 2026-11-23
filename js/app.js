@@ -1,13 +1,13 @@
 // Nous Deux — app shell: account, couple space, chat, invitations, game screen, notifications.
-import { CFG } from './config.js';
-import { $, h, toast } from './ui.js';
-import { sfx, burst, confetti, shake, soundOn, setSound } from './fx.js';
-import { hasPin, clearPin, showLock, choosePin, locked } from './lock.js';
-import { GAMES, GAME_LIST } from './games/index.js';
-import { mountDuel } from './games/duel.js';
-import { pct as quizPct } from './games/quiz.js';
+import { CFG } from './config.js?v=4';
+import { $, h, toast } from './ui.js?v=4';
+import { sfx, burst, confetti, shake, soundOn, setSound } from './fx.js?v=4';
+import { hasPin, clearPin, showLock, choosePin, locked } from './lock.js?v=4';
+import { GAMES, GAME_LIST } from './games/index.js?v=4';
+import { mountDuel } from './games/duel.js?v=4';
+import { pct as quizPct } from './games/quiz.js?v=4';
 
-const APP_VERSION = '3';
+const APP_VERSION = '4';
 const app = $('#app');
 const S = {
   sb: null, user: null, profile: null, couple: null, partner: null,

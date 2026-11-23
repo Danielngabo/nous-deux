@@ -1,7 +1,7 @@
 // Dames (10×10, règles internationales simplifiées) — tour par tour.
 // Pièces : 1 pion blanc, 2 pion noir, 3 dame blanche, 4 dame noire. Les blancs (siège 0) montent.
-import { h } from '../ui.js';
-import { sfx } from '../fx.js';
+import { h } from '../ui.js?v=4';
+import { sfx } from '../fx.js?v=4';
 
 const N = 10;
 const DIRS = [[-1, -1], [-1, 1], [1, -1], [1, 1]];

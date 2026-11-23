@@ -1,5 +1,5 @@
 // Nous Deux — service worker: offline shell + push notifications
-const VERSION = 'nd-v3';
+const VERSION = 'nd-v4';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.webmanifest',
   'js/app.js', 'js/ui.js', 'js/config.js', 'js/fx.js', 'js/lock.js',
